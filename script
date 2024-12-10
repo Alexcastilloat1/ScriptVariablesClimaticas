@@ -1,0 +1,49 @@
+import requests
+import csv
+import os
+
+# Definir el código del estado
+codigo_estado = "mor"
+
+# Crear una lista de códigos de estación
+lista_codigos_estacion = ["0001", "0002", "0003", "0018"]  # Agregar los códigos de estación a consultar
+
+def descargar_datos_txt_y_guardar_csv(codigo_estado, codigo_estacion):
+    # Construcción de la URL con el código del estado y de la estación
+    url = f"https://smn.conagua.gob.mx/tools/RESOURCES/Normales_Climatologicas/Diarios/{codigo_estado}/dia/{codigo_estacion}.txt"
+
+    # Realizar la solicitud a la URL
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        print(f"Datos descargados exitosamente desde: {url}\n")
+
+        # Convertir el contenido del archivo en líneas
+        lineas = response.text.splitlines()
+
+        # Encontrar la línea donde comienzan los datos climáticos
+        for i, linea in enumerate(lineas):
+            if "FECHA" in linea:
+                indice_datos = i + 1  # Índice donde comienzan los datos reales
+                break
+
+        # Crear el archivo CSV en la ruta especificada
+        nombre_archivo_csv = f"/ruta/a/directorio/{codigo_estado}_{codigo_estacion}.csv"
+
+        with open(nombre_archivo_csv, mode="w", newline="", encoding="utf-8") as archivo_csv:
+            escritor_csv = csv.writer(archivo_csv)
+
+            # Escribir encabezados
+            escritor_csv.writerow(["Fecha", "Precip (mm)", "Evap (mm)", "Tmax (°C)", "Tmin (°C)"])
+
+            # Escribir los datos climáticos a partir de la línea identificada
+            for linea in lineas[indice_datos:]:
+                escritor_csv.writerow(linea.split())
+
+        print(f"Archivo CSV guardado exitosamente en: {nombre_archivo_csv}\n")
+    else:
+        print(f"Error al acceder a la URL. Código de estado HTTP: {response.status_code} para la estación {codigo_estacion}\n")
+
+# Recorrer la lista de códigos de estación
+for codigo_estacion in lista_codigos_estacion:
+    descargar_datos_txt_y_guardar_csv(codigo_estado, codigo_estacion)
